@@ -25,6 +25,7 @@ try
     # C# requires all "using" directives to precede namespace declarations, so they
     # are hoisted and de-duplicated first; the remaining bodies are appended after.
     $usings = New-Object 'System.Collections.Generic.HashSet[string]'
+    $attrs = New-Object 'System.Collections.Generic.HashSet[string]'
     $bodies = New-Object 'System.Collections.Generic.List[string]'
 
     foreach ($f in $files)
@@ -39,6 +40,10 @@ try
             {
                 [void]$usings.Add($trim)
             }
+            elseif ($trim.StartsWith('[assembly:'))
+            {
+                [void]$attrs.Add($trim)
+            }
             else
             {
                 [void]$body.AppendLine($line)
@@ -50,6 +55,7 @@ try
 
     $sb = New-Object System.Text.StringBuilder
     foreach ($u in $usings) { [void]$sb.AppendLine($u) }
+    foreach ($a in $attrs) { [void]$sb.AppendLine($a) }
     foreach ($b in $bodies) { [void]$sb.AppendLine($b) }
 
     Add-Type -TypeDefinition $sb.ToString() `
