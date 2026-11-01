@@ -597,138 +597,6 @@ namespace Voltide.UI
             }
         }
 
-        /// <summary>
-        /// The bolt's left edge meets this baseline at x≈143, and the text starts at
-        /// 23.86, so 118 design units is all the room a model name has before it runs
-        /// under the lightning bolt.
-        /// </summary>
-        private const float ModelMaxWidth = 118f;
-
-        /// <summary>
-        /// Model names are kept short in the providers; this is the safety net for a
-        /// long localised name or a newly mapped PID. Latin runs use Montserrat, CJK
-        /// falls back to Alibaba PuHui Ti, and anything wider than the slot shrinks
-        /// (never below 9 px) instead of running into the bolt.
-        /// </summary>
-        private static void DrawModel(Graphics g, string text, float x, float baselineY,
-                                      float sx, Color color)
-        {
-            if (string.IsNullOrEmpty(text)) return;
-
-            bool cjk = HasCjk(text);
-            FontKind kind = cjk ? FontKind.Chinese : FontKind.MontserratMedium;
-
-            float px = 13f * sx;
-            float max = ModelMaxWidth * sx;
-
-            Font font = FontManager.Get(kind, px);
-            float width = Measure(g, text, font, cjk);
-
-            if (width > max && width > 0f)
-            {
-                px = Math.Max(9f * sx, px * (max / width));
-                font = FontManager.Get(kind, px);
-            }
-
-            DrawBaseline(g, text, font, x, baselineY, color, cjk);
-        }
-
-        /// <summary>Detail line: Latin in Montserrat, CJK in the Chinese face, side by side.</summary>
-        private const float DetailMaxWidth = 74f;
-
-        private static void DrawDetail(Graphics g, string text, float x, float baselineY,
-                                       float sx, Color color)
-        {
-            if (string.IsNullOrEmpty(text)) return;
-
-            float px = 11f * sx;
-            float max = DetailMaxWidth * sx;
-
-            float width = MeasureMixed(g, text, px);
-            if (width > max && width > 0f)
-            {
-                px = Math.Max(8f * sx, px * (max / width));
-            }
-
-            DrawMixed(g, text, px, x, baselineY, color);
-        }
-
-        /// <summary>
-        /// Draws one line with per-script faces: "XInput 四档" renders the Latin part in
-        /// Montserrat and the two ideographs in Alibaba PuHui Ti, sharing one baseline.
-        /// Both faces sit on the same y, so ascent differences do not shift the line.
-        /// </summary>
-        private static void DrawMixed(Graphics g, string text, float px,
-                                      float x, float baselineY, Color color)
-        {
-            float cursor = x;
-            int i = 0;
-
-            while (i < text.Length)
-            {
-                bool cjk = IsCjk(text[i]);
-                int start = i;
-
-                while (i < text.Length && IsCjk(text[i]) == cjk) i++;
-
-                string run = text.Substring(start, i - start);
-                Font font = FontManager.Get(cjk ? FontKind.Chinese : FontKind.MontserratMedium, px);
-
-                DrawBaseline(g, run, font, cursor, baselineY, color, cjk);
-                cursor += Measure(g, run, font, cjk);
-            }
-        }
-
-        private static float MeasureMixed(Graphics g, string text, float px)
-        {
-            float total = 0f;
-            int i = 0;
-
-            while (i < text.Length)
-            {
-                bool cjk = IsCjk(text[i]);
-                int start = i;
-
-                while (i < text.Length && IsCjk(text[i]) == cjk) i++;
-
-                string run = text.Substring(start, i - start);
-                Font font = FontManager.Get(cjk ? FontKind.Chinese : FontKind.MontserratMedium, px);
-                total += Measure(g, run, font, cjk);
-            }
-
-            return total;
-        }
-
-        /// <summary>Han, CJK punctuation and fullwidth forms belong to the Chinese face.</summary>
-        private static bool IsCjk(char c)
-        {
-            return (c >= 0x2E80 && c <= 0x9FFF)
-                   || (c >= 0x3000 && c <= 0x303F)
-                   || (c >= 0xFF00 && c <= 0xFFEF);
-        }
-
-        private static float Measure(Graphics g, string text, Font font, bool cjk)
-        {
-            using (StringFormat sf = cjk
-                       ? new StringFormat()
-                       : new StringFormat(StringFormat.GenericTypographic))
-            {
-                return g.MeasureString(text, font, int.MaxValue, sf).Width;
-            }
-        }
-
-        internal static bool HasCjk(string s)
-        {
-            if (string.IsNullOrEmpty(s)) return false;
-
-            for (int i = 0; i < s.Length; i++)
-            {
-                if (s[i] >= 0x2E80 && s[i] <= 0x9FFF) return true;
-            }
-
-            return false;
-        }
-
         private static void DrawText(Graphics g, RectangleF card, CardText t)
         {
             float sx = card.Width / DesignW;
@@ -741,7 +609,8 @@ namespace Voltide.UI
                 ox + 23.86f * sx, oy + 34.14f * sy, TextBrand);
 
             // ---- model (baseline 46.67, size 13, #b29e8c, Medium 500) ----
-            DrawModel(g, t.Model, ox + 23.86f * sx, oy + 46.67f * sy, sx, TextModel);
+            DrawBaseline(g, t.Model, FontKind.MontserratMedium, 13f * sx,
+                ox + 23.86f * sx, oy + 46.67f * sy, TextModel);
 
             // ---- percentage (baseline 94.01, size 42.52, #74dd7c, SemiBold 600) ----
             // "--" means there is no reading at all, so it is drawn muted: a bright
@@ -755,11 +624,8 @@ namespace Voltide.UI
                 ox + 23.86f * sx, oy + 109.14f * sy, TextMuted, true);
 
             // ---- source (baseline 236.14, size 11, #ffffff, Medium 500) ----
-            // Detail can mix scripts ("XInput 四档"), so the face is chosen by content:
-            // Latin runs keep Montserrat, anything with CJK uses the Chinese face.
-            // The space before the bolt is ~74 units here, so a long detail shrinks
-            // rather than sliding under it.
-            DrawDetail(g, t.Source, ox + 23.86f * sx, oy + 236.14f * sy, sx, TextWhite);
+            DrawBaseline(g, t.Source, FontKind.MontserratMedium, 11f * sx,
+                ox + 23.86f * sx, oy + 236.14f * sy, TextWhite);
 
             // ---- time (baseline 247.72, size 10, #878787, Medium 500) ----
             DrawBaseline(g, t.Time, FontKind.MontserratMedium, 10f * sx,
