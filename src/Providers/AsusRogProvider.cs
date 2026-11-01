@@ -40,11 +40,11 @@ namespace Voltide.Providers
 
         public string Name { get { return "ROG HID"; } }
 
-        public List<DeviceInfo> Discover(List<HidDeviceInfo> catalog)
+        public List<DeviceInfo> Discover()
         {
             List<DeviceInfo> found = new List<DeviceInfo>();
 
-            foreach (HidDeviceInfo h in catalog)
+            foreach (HidDeviceInfo h in HidNative.Enumerate())
             {
                 if (h.VendorId != AsusVid) continue;
                 if (h.ProductId != OmniReceiverPid) continue;
@@ -92,7 +92,7 @@ namespace Voltide.Providers
                         return r;
                     }
 
-                    byte[] resp = s.Read(900);
+                    byte[] resp = s.Read(1500);
 
                     if (resp == null || resp.Length <= BatteryIndex)
                     {
