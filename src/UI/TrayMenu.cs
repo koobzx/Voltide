@@ -368,11 +368,10 @@ namespace Voltide.UI
                 }
 
                 Color nameColor = row.Kind == MenuRowKind.Asleep ? Muted : NameCol;
-                Font nameFont = FitName(g, row.Name, (BarX - TextX - 4f) * s);
                 using (SolidBrush brush = new SolidBrush(Lift(nameColor, lift)))
                 {
-                    g.DrawString(row.Name, nameFont, brush, TextX * s,
-                                 top + LevelBaseline * s - FontManager.Ascent(nameFont), sf);
+                    g.DrawString(row.Name, _nameFont, brush, TextX * s,
+                                 top + LevelBaseline * s - FontManager.Ascent(_nameFont), sf);
                 }
 
                 // Numeric values always use the Latin face, including the remembered
@@ -506,35 +505,6 @@ namespace Voltide.UI
                 (int)(a.R + (b.R - a.R) * t),
                 (int)(a.G + (b.G - a.G) * t),
                 (int)(a.B + (b.B - a.B) * t));
-        }
-
-        /// <summary>
-        /// Names sit between the left rule and the progress bar. A long one shrinks
-        /// rather than sliding under the bar, and CJK names switch to the Chinese face.
-        /// </summary>
-        private Font FitName(Graphics g, string text, float avail)
-        {
-            bool cjk = CardRenderer.HasCjk(text);
-            FontKind kind = cjk ? FontKind.Chinese : FontKind.MontserratMedium;
-
-            float px = 20f * _scale;
-            Font font = FontManager.Get(kind, px);
-            if (string.IsNullOrEmpty(text)) return font;
-
-            float width;
-            using (StringFormat sf = cjk
-                       ? new StringFormat()
-                       : new StringFormat(StringFormat.GenericTypographic))
-            {
-                width = g.MeasureString(text, font, int.MaxValue, sf).Width;
-            }
-
-            if (width > avail && width > 0f)
-            {
-                font = FontManager.Get(kind, Math.Max(13f * _scale, px * (avail / width)));
-            }
-
-            return font;
         }
 
         // ------------------------------------------------------------ helpers
