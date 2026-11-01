@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Voltide.Core;
-using Voltide.Interop;
 
 namespace Voltide.Providers
 {
@@ -13,7 +12,7 @@ namespace Voltide.Providers
         string Name { get; }
 
         /// <summary>Find devices this provider can talk to.</summary>
-        List<DeviceInfo> Discover(List<HidDeviceInfo> catalog);
+        List<DeviceInfo> Discover();
 
         /// <summary>Read the current battery state of one device.</summary>
         DeviceReading Read(DeviceInfo device);
