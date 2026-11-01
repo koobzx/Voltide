@@ -102,7 +102,7 @@ namespace Voltide.Interop
         [DllImport("hid.dll", SetLastError = true)]
         public static extern bool HidD_GetFeature(IntPtr h, byte[] buf, int len);
 
-        [DllImport("hid.dll")]
+        [DllImport("hid.dll", EntryPoint = "HidD_SetFeature", SetLastError = true)]
         public static extern bool HidD_SetFeature(IntPtr h, byte[] buf, int len);
 
         [DllImport("setupapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -225,6 +225,9 @@ namespace Voltide.Interop
         private IntPtr _evt;
         private int _inputLen;
         private bool _closed;
+
+        /// <summary>Raw handle for HidD_SetFeature/HidD_GetFeature control-pipe calls.</summary>
+        public IntPtr Handle { get { return _handle; } }
 
         public HidSession(string path, int inputLen, int outputLen)
             : this(path, inputLen, outputLen, false)
